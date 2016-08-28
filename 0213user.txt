@@ -1,0 +1,200 @@
+用户和权限管理:
+
+1、用户是什么？
+2、没有用户，可否？
+
+file1: Tom
+file2: Jerry
+
+用户：资源分配，是安全权限模型的核心要素之一
+密码：用户认证
+
+多用户的操作系统：
+
+信息库：用户 密码
+
+名称解析：User IDentifier, UID
+
+10: 
+
+用户容器：组（group），角色（role）
+	组名，Group IDentifier， GID
+
+	解析：在数据库按搜索码查找到对应的条目，并找与之对应额外其它数据过程
+
+	数据库
+		文本文件
+		SQL数据库
+		ldap数据库
+
+		/etc/passwd：
+
+		加密方法：
+			对称加密：DES, 3DES, AES
+			公钥加密：DSA, RSA
+			单向加密：雪崩效应，定长输出，不可逆
+				MD5: 信息摘要，128bits
+				SHA1: 安全的hash算法, 160bits
+				SHA256：
+				SHA512：
+
+		密码信息库：/etc/shadow
+
+			Tom:mageeduabce,    $6$abce$fkdlagjdkalghio3qu4389qjtrkiejgr
+			Jerry:mageeduxyzm   $6$xyzm$878956ukijotrjiytoeutyvimyeuiore
+
+md5sum, sha1sum
+
+组：用户容器，角色
+	/etc/group
+	/etc/gshadow
+
+安全上下文：
+	运行中的进程有其属主和属组：
+
+大纲：useradd, id, passwd, usermod, chsh, chage, chfn, userdel, groupadd, groupmod, groupdel, su
+
+
+创建用户：
+	useradd UserName
+
+	/etc/passwd:
+		用户名:x:UID:基本组ID:comment信息:HOME:默认shell
+
+	useradd: adduser
+		-u UID：指定UID
+		-g GID: 指定GID，即指定用户的基本组，但GID要事先存在
+		-G GID：指定用户的额外组，组要事先存在；
+		-d /path/to/somewhre: 
+		-c "Comment"： 
+		-s /path/to/shell: 指定默认shell，应该指定使用/etc/shells文件中出现的shell；
+
+		-m: 创建用户时，强制给用户创建家目录；
+		-M: 创建用户，但不创建家目录;
+
+		-r: 创建系统用户
+			id: 1-499
+			不会为用户创建家目录
+			默认shell为/sbin/nologin
+
+		-D: default，为useradd命令创建的用户指定新的默认值
+
+	groupadd GrpName
+		-g GID: 创建组并为其指定GID
+
+
+
+用户类别：
+	管理员：0
+	普通用户：1-65535
+		系统用户：1-499
+		登录用户：500+
+
+用户组：
+	管理员组
+	普通组
+
+	以用户为视角，组可为两类：
+		基本组: 显示在/etc/passwd中GID字段组，为用户的基本组；
+		额外组，附加组: /etc/group
+
+
+	userdel: 删除用户, 默认会保留家目录
+		格式：userdel UserName
+		-r: 一并删除家目录
+
+总结：
+	/etc/passwd：
+		Username:x:UID:GID:Comment:Home:Shell
+	/etc/group：
+		GroupName:x:GID:User List
+
+	/etc/skel, /etc/default/useradd
+
+
+设定用户密码: passwd
+	普通用户：passwd
+	管理员：
+		改自己密码：passwd
+		改其它用户密码：passwd UserName
+
+	密码安全性策略：足够复杂
+		够长；
+		交叉应用数字、大写字母、小写字母和特殊中的至少三种；
+		尽量避免使用易猜测的密码；
+		定期更换；
+
+/etc/shadow文件的格式：
+	UserName:加密的密码:最近一次密码修改时间:最短使用期限:最长使用期限:警告区间:非活动区间:帐号的过期期限:预留段
+
+	-l: 锁用户
+	-u: 解锁
+
+设定组密码：gpasswd GroupName
+
+如何修改用户的属性定义：
+	修改用户默认shell: chsh
+	修改用户注释：chfn
+
+	usermod: 
+		-u UID:
+		-g GID:
+		-G GID: 默认会覆盖原有的附加组；如果是添加，则同时使用-a选项; 
+		-c String: 
+		-d /path/to/New_Home： 默认不会迁移用户的家目录；如果要迁移，则同时使用-m
+		-s SHELL: 
+		-l New_login_name: 	
+
+		-L: 锁定用户帐号
+		-U: 解锁
+
+如何修改组属性定义：
+	groupmod: 
+		-g GID
+		-n New_Group_Name: 
+
+修改帐号日期属性：chage
+	-E
+	-I
+	-m
+	-M
+	-W
+
+查看用户相关信息id：
+	id UserName
+		-u: 显示UID，跟-n一起使用则显示用户名
+		-g: 显示基本组ID，跟-n一起使用则显示基本组名
+		-G: 显示所有组ID，跟-n一起使用则显示所有组名
+
+组管理相关命令总结：
+	groupadd
+	groupmod
+	groupdel
+	gpasswd
+
+su: Switch User
+	切换用户：
+		su Username
+			-l
+			-c 'COMMAND'
+
+练习：
+1、创建一个用户mandriva，其ID号为2002，基本组为distro（组ID为3003），附加组为linux；
+# groupadd linux
+# groupadd -g 3003 distro
+# useradd -u 2002 -g distro -G linux mandriva
+
+2、创建一个用户fedora，其全名为Fedora Community，默认shell为tcsh；
+# useradd -c "Fedora Community" -s /bin/tcsh fedora
+
+3、修改mandriva的ID号为4004，基本组为linux，附加组为distro和fedora；
+# usermod -u 4004 -g linux -G distro,fedora mandriva
+
+4、给fedora加密码，并设定其密码最短使用期限为2天，最长为50天；
+# passwd fedora
+# chage -m 2 -M 50 fedora
+
+5、将mandriva的默认shell改为/bin/bash; 
+
+
+权限、shell特性
